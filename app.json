@@ -17,7 +17,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.tally.learning",
-      "versionCode": 4,
+      "versionCode": 5,
       "predictiveBackGestureEnabled": false
     },
     "web": {
