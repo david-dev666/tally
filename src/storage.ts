@@ -6,6 +6,7 @@ const RECORDS_KEY = 'tally.records.v1';
 const ACTIVITIES_KEY = 'tally.activities.v1';
 const ACTIVITIES_SOURCE_KEY = 'tally.activities.source.v1';
 const FEEDBACK_KEY = 'tally.feedback.level.v1';
+const TODAY_ORDER_KEY = 'tally.today.order.v1';
 
 function isValidRecord(value: unknown): value is LearningRecord {
   if (!value || typeof value !== 'object') return false;
@@ -116,6 +117,22 @@ export async function loadFeedbackLevel(): Promise<string | null> {
 export async function saveFeedbackLevel(value: string): Promise<void> {
   try {
     await AsyncStorage.setItem(FEEDBACK_KEY, value);
+  } catch {
+    // 同上
+  }
+}
+
+export async function loadTodayOrder(): Promise<string | null> {
+  try {
+    return await AsyncStorage.getItem(TODAY_ORDER_KEY);
+  } catch {
+    return null;
+  }
+}
+
+export async function saveTodayOrder(value: string): Promise<void> {
+  try {
+    await AsyncStorage.setItem(TODAY_ORDER_KEY, value);
   } catch {
     // 同上
   }

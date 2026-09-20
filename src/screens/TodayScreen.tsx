@@ -14,6 +14,7 @@ import { ActionButton } from '../components/ActionButton';
 import type { ActivitiesStore } from '../hooks/useActivities';
 import type { RecordsStore } from '../hooks/useRecords';
 import { useTheme } from '../hooks/useTheme';
+import type { TodayOrder } from '../hooks/useTodayOrder';
 import { font, radius, space, type ThemeColors } from '../theme';
 import type { Activity, LearningRecord } from '../types';
 import { formatClock, formatFullDate } from '../utils/date';
@@ -112,10 +113,12 @@ function RecordRow({
 interface TodayScreenProps {
   records: RecordsStore;
   activities: ActivitiesStore;
+  /** 记录按钮区与今日明细区的上下顺序 */
+  order: TodayOrder;
   onGoToSettings: () => void;
 }
 
-export function TodayScreen({ records, activities, onGoToSettings }: TodayScreenProps) {
+export function TodayScreen({ records, activities, order, onGoToSettings }: TodayScreenProps) {
   const { colors, shadow } = useTheme();
   const styles = useMemo(() => createStyles(colors, shadow), [colors, shadow]);
 
@@ -161,6 +164,66 @@ export function TodayScreen({ records, activities, onGoToSettings }: TodayScreen
       </View>
     );
   }
+
+  /** 记录按钮区 */
+  const actionsBlock = (
+    <View style={styles.block}>
+      <Text style={styles.sectionTitle}>点一下记一笔 · 长按写备注</Text>
+      {list.map((activity) => (
+        <ActionButton
+          key={activity.id}
+          activity={activity}
+          count={records.todayCounts[activity.id] ?? 0}
+          lastAt={records.lastAtByActivity[activity.id]}
+          onRecord={(note) => handleRecord(activity.id, note)}
+        />
+      ))}
+    </View>
+  );
+
+  /** 今日明细区（含顶部的解锁按钮） */
+  const detailBlock = (
+    <View style={styles.block}>
+      <View style={styles.sectionHeaderRow}>
+        <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>今日明细</Text>
+        {records.todayRecords.length > 0 ? (
+          <Pressable
+            onPress={unlocked ? handleLock : handleUnlock}
+            style={({ pressed }) => [
+              styles.lockBtn,
+              unlocked && styles.lockBtnOn,
+              pressed && styles.pressed,
+            ]}
+          >
+            <Text style={[styles.lockBtnText, unlocked && styles.lockBtnTextOn]}>
+              {unlocked ? '锁定' : '解锁'}
+            </Text>
+          </Pressable>
+        ) : null}
+      </View>
+
+      {records.todayRecords.length === 0 ? (
+        <View style={styles.empty}>
+          <Text style={styles.emptyText}>还没有记录，点上面的按钮开始吧</Text>
+        </View>
+      ) : (
+        <View style={styles.list}>
+          {records.todayRecords.map((record, index) => (
+            <RecordRow
+              key={record.id}
+              record={record}
+              activity={activities.activityMap[record.activityId]}
+              isFirst={index === 0}
+              unlocked={unlocked}
+              styles={styles}
+              colors={colors}
+              onRemove={records.removeRecord}
+            />
+          ))}
+        </View>
+      )}
+    </View>
+  );
 
   return (
     <ScrollView
@@ -215,54 +278,16 @@ export function TodayScreen({ records, activities, onGoToSettings }: TodayScreen
         <Text style={styles.summaryFoot}>本周累计 {records.weekCount} 次</Text>
       </View>
 
-      <Text style={styles.sectionTitle}>点一下记一笔 · 长按写备注</Text>
-      {list.map((activity) => (
-        <ActionButton
-          key={activity.id}
-          activity={activity}
-          count={records.todayCounts[activity.id] ?? 0}
-          lastAt={records.lastAtByActivity[activity.id]}
-          onRecord={(note) => handleRecord(activity.id, note)}
-        />
-      ))}
-
-      <View style={[styles.sectionHeaderRow, styles.sectionTitleSpaced]}>
-        <Text style={[styles.sectionTitle, styles.sectionTitleInline]}>今日明细</Text>
-        {records.todayRecords.length > 0 ? (
-          <Pressable
-            onPress={unlocked ? handleLock : handleUnlock}
-            style={({ pressed }) => [
-              styles.lockBtn,
-              unlocked && styles.lockBtnOn,
-              pressed && styles.pressed,
-            ]}
-          >
-            <Text style={[styles.lockBtnText, unlocked && styles.lockBtnTextOn]}>
-              {unlocked ? '锁定' : '解锁'}
-            </Text>
-          </Pressable>
-        ) : null}
-      </View>
-
-      {records.todayRecords.length === 0 ? (
-        <View style={styles.empty}>
-          <Text style={styles.emptyText}>还没有记录，点上面的按钮开始吧</Text>
-        </View>
+      {order === 'detail-first' ? (
+        <>
+          {detailBlock}
+          {actionsBlock}
+        </>
       ) : (
-        <View style={styles.list}>
-          {records.todayRecords.map((record, index) => (
-            <RecordRow
-              key={record.id}
-              record={record}
-              activity={activities.activityMap[record.activityId]}
-              isFirst={index === 0}
-              unlocked={unlocked}
-              styles={styles}
-              colors={colors}
-              onRemove={records.removeRecord}
-            />
-          ))}
-        </View>
+        <>
+          {actionsBlock}
+          {detailBlock}
+        </>
       )}
     </ScrollView>
   );
@@ -309,7 +334,6 @@ function createStyles(colors: ThemeColors, shadow: ViewStyle) {
       backgroundColor: colors.card,
       borderRadius: radius.lg,
       padding: space.lg,
-      marginBottom: space.xl + space.xs,
       ...shadow,
     },
     summaryTop: {
@@ -352,7 +376,8 @@ function createStyles(colors: ThemeColors, shadow: ViewStyle) {
       marginLeft: 2,
       letterSpacing: -0.1,
     },
-    sectionTitleSpaced: { marginTop: space.xl },
+    /** 记录按钮区 / 今日明细区共用的外层，间距在这里统一给 */
+    block: { marginTop: space.xl },
     sectionTitleInline: { marginBottom: 0 },
     sectionHeaderRow: {
       flexDirection: 'row',

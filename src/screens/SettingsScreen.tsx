@@ -7,6 +7,11 @@ import { tintOf } from '../constants';
 import type { ActivitiesStore, ActivityDraft } from '../hooks/useActivities';
 import type { RecordsStore } from '../hooks/useRecords';
 import { useTheme } from '../hooks/useTheme';
+import {
+  TODAY_ORDER_LABELS,
+  TODAY_ORDERS,
+  type TodayOrder,
+} from '../hooks/useTodayOrder';
 import { font, radius, space, type ThemeColors } from '../theme';
 import type { Activity } from '../types';
 import { exportBackup, pickBackup } from '../utils/backup';
@@ -26,6 +31,8 @@ interface SettingsScreenProps {
   activities: ActivitiesStore;
   feedbackLevel: FeedbackLevel;
   onChangeFeedbackLevel: (level: FeedbackLevel) => void;
+  todayOrder: TodayOrder;
+  onChangeTodayOrder: (order: TodayOrder) => void;
 }
 
 export function SettingsScreen({
@@ -33,6 +40,8 @@ export function SettingsScreen({
   activities,
   feedbackLevel,
   onChangeFeedbackLevel,
+  todayOrder,
+  onChangeTodayOrder,
 }: SettingsScreenProps) {
   const { colors, shadow } = useTheme();
   const styles = useMemo(() => createStyles(colors, shadow), [colors, shadow]);
@@ -170,7 +179,31 @@ export function SettingsScreen({
       >
         <Text style={styles.title}>设置</Text>
 
-        <Text style={styles.sectionTitle}>震动</Text>
+        <Text style={styles.sectionTitle}>今天页</Text>
+        <View style={styles.list}>
+          {TODAY_ORDERS.map((item, index) => (
+            <Pressable
+              key={item}
+              onPress={() => onChangeTodayOrder(item)}
+              style={({ pressed }) => [
+                styles.row,
+                index > 0 && styles.divider,
+                pressed && styles.pressed,
+              ]}
+            >
+              <View style={styles.rowTexts}>
+                <Text style={styles.rowLabel}>{TODAY_ORDER_LABELS[item]}</Text>
+              </View>
+              {todayOrder === item ? <Text style={styles.check}>✓</Text> : null}
+            </Pressable>
+          ))}
+        </View>
+        <Text style={styles.sectionHint}>
+          「记录按钮」和「今日明细」谁排在上面。想先看今天记了什么再决定打哪张卡，
+          就选「今日明细在前」。
+        </Text>
+
+        <Text style={[styles.sectionTitle, styles.sectionSpaced]}>震动</Text>
         <View style={styles.list}>
           {FEEDBACK_LEVELS.map((item, index) => (
             <Pressable

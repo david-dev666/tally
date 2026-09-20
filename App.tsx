@@ -10,6 +10,7 @@ import { useActivities } from './src/hooks/useActivities';
 import { useFeedbackLevel } from './src/hooks/useFeedbackLevel';
 import { useRecords } from './src/hooks/useRecords';
 import { ThemeProvider, useTheme } from './src/hooks/useTheme';
+import { useTodayOrder } from './src/hooks/useTodayOrder';
 import { HistoryScreen } from './src/screens/HistoryScreen';
 import { SettingsScreen } from './src/screens/SettingsScreen';
 import { TodayScreen } from './src/screens/TodayScreen';
@@ -24,6 +25,8 @@ function Shell() {
   const activities = useActivities();
   // 档位读取很快，不阻塞首屏；取到后会立刻作用于之后的震动
   const feedback = useFeedbackLevel();
+  // 同样很快，先用默认顺序渲染，读到存储值后再切
+  const todayOrder = useTodayOrder();
 
   const ready = records.recordsReady && activities.activitiesReady;
 
@@ -37,6 +40,7 @@ function Shell() {
               <TodayScreen
                 records={records}
                 activities={activities}
+                order={todayOrder.todayOrder}
                 onGoToSettings={() => setTab('settings')}
               />
             ) : null}
@@ -49,6 +53,8 @@ function Shell() {
                 activities={activities}
                 feedbackLevel={feedback.feedbackLevel}
                 onChangeFeedbackLevel={feedback.changeLevel}
+                todayOrder={todayOrder.todayOrder}
+                onChangeTodayOrder={todayOrder.changeOrder}
               />
             ) : null}
           </View>
