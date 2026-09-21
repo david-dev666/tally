@@ -2,7 +2,7 @@
   "expo": {
     "name": "Tally",
     "slug": "tally",
-    "version": "1.0.0",
+    "version": "1.0.3",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "dark",
@@ -17,7 +17,7 @@
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
       "package": "com.tally.learning",
-      "versionCode": 8,
+      "versionCode": 11,
       "predictiveBackGestureEnabled": false
     },
     "web": {
