@@ -123,13 +123,13 @@ export function HistoryScreen({
   const styles = useMemo(() => createStyles(colors, shadow), [colors, shadow]);
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
 
-  /** 时间窗口的起点（当天 00:00） */
+  /** 时间窗口的起点（当天 00:00）；依赖 todayKey，跨天后窗口跟着往前挪 */
   const windowStart = useMemo(() => {
     const d = new Date();
     d.setDate(d.getDate() - (WINDOW_DAYS - 1));
     d.setHours(0, 0, 0, 0);
     return d.getTime();
-  }, []);
+  }, [records.todayKey]);
 
   /** 最近 14 天，每天的次数与按内容的拆解 */
   const trend = useMemo<TrendDay[]>(() => {
@@ -147,7 +147,7 @@ export function HistoryScreen({
       });
     }
     return days;
-  }, [records.dayGroups]);
+  }, [records.dayGroups, records.todayKey]);
 
   /** 单日最高次数，用来定柱子的高度基准 */
   const peak = useMemo(() => Math.max(1, ...trend.map((day) => day.total)), [trend]);

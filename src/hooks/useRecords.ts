@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { loadRecords, saveRecords } from '../storage';
 import type { LearningRecord } from '../types';
 import { dayKey, startOfDay, startOfWeek } from '../utils/date';
+import { useTodayKey } from './useTodayKey';
 
 export interface DayGroup {
   key: string;
@@ -42,6 +43,12 @@ function computeStreak(records: LearningRecord[]): number {
 export function useRecords() {
   const [records, setRecords] = useState<LearningRecord[]>([]);
   const [recordsReady, setRecordsReady] = useState(false);
+  /**
+   * 当前「今天」的日期键。它只在真正跨天（或 App 回到前台发现已跨天）时变化，
+   * 下面的派生统计都把它列进依赖 —— 否则 App 一直挂着过夜，「今日明细」
+   * 会永远停在昨天，因为 records 本身没有任何变化。
+   */
+  const todayKey = useTodayKey();
 
   useEffect(() => {
     let alive = true;
@@ -115,7 +122,7 @@ export function useRecords() {
 
   const todayRecords = useMemo(
     () => records.filter((record) => record.at >= startOfDay(Date.now())),
-    [records],
+    [records, todayKey],
   );
 
   const todayCounts = useMemo(() => countByActivity(todayRecords), [todayRecords]);
@@ -135,9 +142,9 @@ export function useRecords() {
   const weekCount = useMemo(() => {
     const from = startOfWeek(Date.now());
     return records.filter((record) => record.at >= from).length;
-  }, [records]);
+  }, [records, todayKey]);
 
-  const streak = useMemo(() => computeStreak(records), [records]);
+  const streak = useMemo(() => computeStreak(records), [records, todayKey]);
 
   const activeDays = useMemo(() => new Set(records.map((r) => dayKey(r.at))).size, [records]);
 
@@ -164,6 +171,8 @@ export function useRecords() {
   return {
     recordsReady,
     records,
+    /** 「今天」的日期键，页面可拿它作为重渲染的依据（比如顶部日期文案） */
+    todayKey,
     addRecord,
     removeRecord,
     removeRecordsByActivity,
